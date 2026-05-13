@@ -1,0 +1,41 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CPU Stress Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #0f172a;
+      color: white;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #start { background: #22c55e; }
+    #stop { background: #ef4444; }
+    #status { margin-top: 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>CPU Stress Test</h1>
+  <p>This will push your CPU to high usage using JavaScript.</p>
+
+  <button id="start">Start Test</button>
+  <button id="stop">Stop Test</button>
+
+  <div id="status">Status: Idle</div>
+  <div id="threads">Detected Threads: </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
