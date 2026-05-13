@@ -1,13 +1,15 @@
-/* ======================= */
-/* main.js */
-/* ======================= */
-
 let workers = [];
 let running = false;
+
+// Show thread count
+const threadCount = navigator.hardwareConcurrency || 'Unknown';
+document.getElementById('threads').innerText =
+  'Detected Threads: ' + threadCount;
 
 function startTest() {
   if (running) return;
   running = true;
+
   document.getElementById('status').innerText = 'Status: Running...';
 
   const cores = navigator.hardwareConcurrency || 4;
@@ -21,14 +23,15 @@ function startTest() {
 
 function stopTest() {
   running = false;
-  workers.forEach(w => w.postMessage('stop'));
+
+  workers.forEach(w => {
+    w.postMessage('stop');
+    w.terminate(); // extra safety
+  });
+
   workers = [];
   document.getElementById('status').innerText = 'Status: Stopped';
 }
-
-// Display thread count on load
-const threadCount = navigator.hardwareConcurrency || 'Unknown';
-document.getElementById('threads').innerText = 'Detected Threads: ' + threadCount;
 
 document.getElementById('start').onclick = startTest;
 document.getElementById('stop').onclick = stopTest;
