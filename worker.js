@@ -1,13 +1,19 @@
-/* ======================= */
-/* worker.js */
-/* ======================= */
-
 let runningWorker = false;
 
 function burnCPU() {
-  while (runningWorker) {
-    Math.sqrt(Math.random());
+  function loop() {
+    if (!runningWorker) return;
+
+    // Heavy work chunk
+    for (let i = 0; i < 1e6; i++) {
+      Math.sqrt(Math.random());
+    }
+
+    // Yield so stop message can be received
+    setTimeout(loop, 0);
   }
+
+  loop();
 }
 
 onmessage = function(e) {
@@ -18,5 +24,6 @@ onmessage = function(e) {
 
   if (e.data === 'stop') {
     runningWorker = false;
+    close(); // terminate worker
   }
 };
