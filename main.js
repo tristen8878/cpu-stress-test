@@ -20,7 +20,7 @@ function startBenchmark() {
   score = 0;
 
   document.getElementById("status").innerText =
-    "Status: Running 20s benchmark...";
+    "Status: Running for 20 seconds please wait!";
 
   document.getElementById("score").innerText = "Score: running...";
 
