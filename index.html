@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CPU Stress Test</title>
+  <title>CPU Benchmark Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px;
+      padding: 30px;
       background: #0f172a;
       color: white;
     }
@@ -17,31 +17,44 @@
     button {
       padding: 12px 24px;
       margin: 10px;
-      font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      font-size: 16px;
     }
 
     #start { background: #22c55e; }
     #stop { background: #ef4444; }
 
-    #status {
+    canvas {
       margin-top: 20px;
+      background: #111827;
+      border-radius: 10px;
+    }
+
+    #status {
+      margin-top: 15px;
       font-size: 18px;
+    }
+
+    #score {
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
-  <h1>CPU Stress Test</h1>
-  <p>This will push your CPU using Web Workers.</p>
+  <h1>CPU Benchmark Test</h1>
 
-  <button id="start">Start Test</button>
-  <button id="stop">Stop Test</button>
+  <button id="start">Start 20s Benchmark</button>
+  <button id="stop">Stop</button>
 
   <div id="status">Status: Idle</div>
-  <div id="threads"></div>
+  <div id="score">Score: --</div>
+
+  <canvas id="graph" width="500" height="200"></canvas>
 
   <script src="main.js"></script>
 </body>
