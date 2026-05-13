@@ -1,81 +1,85 @@
 let workers = [];
 let running = false;
 
-let score = 0;
-const DURATION = 20000;
+let singleScore = 0;
+let multiScore = 0;
 
-const ring = document.getElementById("ring");
-const card = document.getElementById("card");
+const SINGLE_DURATION = 5000;
+const MULTI_DURATION = 20000;
 
 const threads = navigator.hardwareConcurrency || "Unknown";
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("threads").innerText = "Threads: " + threads;
+  document.getElementById("threads").innerText =
+    "Threads: " + threads;
 
-  document.getElementById("start").onclick = start;
-  document.getElementById("stop").onclick = stop;
-  document.getElementById("theme").onclick = toggleTheme;
+  document.getElementById("start").onclick = startBenchmark;
+  document.getElementById("stop").onclick = stopBenchmark;
 
   renderLeaderboard();
 });
 
-function animateScore(target) {
-  let current = 0;
-  const step = Math.ceil(target / 60);
-
-  const interval = setInterval(() => {
-    current += step;
-    if (current >= target) {
-      current = target;
-      clearInterval(interval);
-    }
-    document.getElementById("score").innerText = current;
-  }, 16);
-}
-
-function animateRing(ms) {
-  const total = DURATION;
-  const interval = setInterval(() => {
-    const progress = ms / total;
-    const offset = 125 - (125 * progress);
-    ring.style.strokeDashoffset = offset;
-
-    if (ms >= total) clearInterval(interval);
-    ms += 100;
-  }, 100);
-}
-
-function start() {
+function startBenchmark() {
   if (running) return;
   running = true;
 
-  score = 0;
+  document.getElementById("status").innerText =
+    "Running single-thread test...";
 
-  document.getElementById("status").innerText = "Running...";
-  card.classList.add("running");
+  document.getElementById("score").innerText = "Score: running...";
+
+  runSingleThreadTest(() => {
+    startMultiThreadTest();
+  });
+}
+
+function runSingleThreadTest(callback) {
+  singleScore = 0;
+
+  const worker = new Worker("worker.js");
+
+  worker.onmessage = (e) => {
+    if (e.data.type === "result") {
+      singleScore += e.data.value;
+    }
+  };
+
+  worker.postMessage({ type: "start" });
+
+  setTimeout(() => {
+    worker.postMessage({ type: "stop" });
+    worker.terminate();
+
+    callback();
+  }, SINGLE_DURATION);
+}
+
+function startMultiThreadTest() {
+  multiScore = 0;
+  workers = [];
+
+  document.getElementById("status").innerText =
+    "Running multi-thread test...";
 
   const cores = navigator.hardwareConcurrency || 4;
 
   for (let i = 0; i < cores; i++) {
-    const w = new Worker("worker.js");
+    const worker = new Worker("worker.js");
 
-    w.onmessage = e => {
+    worker.onmessage = (e) => {
       if (e.data.type === "result") {
-        score += e.data.value;
+        multiScore += e.data.value;
       }
     };
 
-    w.postMessage({ type: "start" });
-    workers.push(w);
+    worker.postMessage({ type: "start" });
+    workers.push(worker);
   }
 
-  animateRing(0);
-
-  setTimeout(stop, DURATION);
+  setTimeout(stopBenchmark, MULTI_DURATION);
 }
 
-function stop() {
-  if (!running) return;
+function stopBenchmark() {
   running = false;
 
   workers.forEach(w => {
@@ -85,28 +89,28 @@ function stop() {
 
   workers = [];
 
-  const final = Math.floor(score / 100000);
+  const single = Math.floor(singleScore / 100000);
+  const multi = Math.floor(multiScore / 100000);
 
   document.getElementById("status").innerText = "Finished";
-  card.classList.remove("running");
 
-  animateScore(final);
+  document.getElementById("score").innerText =
+    `Single: ${single} | Multi: ${multi}`;
 
-  save(final);
+  saveToLeaderboard(multi);
   renderLeaderboard();
 }
 
-function toggleTheme() {
-  document.body.classList.toggle("light");
-}
-
-function save(finalScore) {
+function saveToLeaderboard(finalScore) {
   const name =
     document.getElementById("nameInput").value || "Unknown CPU";
 
   const data = JSON.parse(localStorage.getItem("lb") || "[]");
 
-  data.push({ name, score: finalScore });
+  data.push({
+    name,
+    score: finalScore
+  });
 
   data.sort((a, b) => b.score - a.score);
 
