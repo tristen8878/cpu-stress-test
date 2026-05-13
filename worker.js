@@ -1,13 +1,25 @@
-let runningWorker = false;
+let running = false;
 
-function burnCPU() {
+function work() {
+  let count = 0;
+
   function loop() {
-    if (!runningWorker) return;
+    if (!running) return;
 
-    // heavy CPU load per cycle
-    for (let i = 0; i < 5e7; i++) {
+    let ops = 0;
+
+    // heavy CPU work chunk
+    for (let i = 0; i < 2e6; i++) {
       Math.sqrt(i * Math.random());
+      ops++;
     }
+
+    count += ops;
+
+    postMessage({
+      type: "result",
+      value: ops
+    });
 
     setTimeout(loop, 0);
   }
@@ -15,14 +27,14 @@ function burnCPU() {
   loop();
 }
 
-onmessage = function(e) {
-  if (e.data === 'start') {
-    runningWorker = true;
-    burnCPU();
+onmessage = function (e) {
+  if (e.data.type === "start") {
+    running = true;
+    work();
   }
 
-  if (e.data === 'stop') {
-    runningWorker = false;
+  if (e.data.type === "stop") {
+    running = false;
     close();
   }
 };
