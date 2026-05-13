@@ -1,10 +1,10 @@
 let workers = [];
 let running = false;
 
-// Show thread count
-const threadCount = navigator.hardwareConcurrency || 'Unknown';
+// show CPU threads
+const threads = navigator.hardwareConcurrency || 'Unknown';
 document.getElementById('threads').innerText =
-  'Detected Threads: ' + threadCount;
+  `Detected Threads: ${threads}`;
 
 function startTest() {
   if (running) return;
@@ -26,10 +26,11 @@ function stopTest() {
 
   workers.forEach(w => {
     w.postMessage('stop');
-    w.terminate(); // extra safety
+    w.terminate();
   });
 
   workers = [];
+
   document.getElementById('status').innerText = 'Status: Stopped';
 }
 
