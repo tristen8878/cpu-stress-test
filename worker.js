@@ -4,12 +4,11 @@ function burnCPU() {
   function loop() {
     if (!runningWorker) return;
 
-    // Heavy work chunk
-    for (let i = 0; i < 1e6; i++) {
-      Math.sqrt(Math.random());
+    // heavy CPU load per cycle
+    for (let i = 0; i < 5e7; i++) {
+      Math.sqrt(i * Math.random());
     }
 
-    // Yield so stop message can be received
     setTimeout(loop, 0);
   }
 
@@ -24,6 +23,6 @@ onmessage = function(e) {
 
   if (e.data === 'stop') {
     runningWorker = false;
-    close(); // terminate worker
+    close();
   }
 };
