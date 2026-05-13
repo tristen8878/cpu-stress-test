@@ -4,6 +4,15 @@ let running = false;
 let score = 0;
 const DURATION = 20000;
 
+// show CPU threads
+const threads = navigator.hardwareConcurrency || 'Unknown';
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("threads").innerText = "Threads: " + threads;
+
+  document.getElementById("start").onclick = startBenchmark;
+  document.getElementById("stop").onclick = stopBenchmark;
+});
+
 function startBenchmark() {
   if (running) return;
   running = true;
@@ -50,6 +59,3 @@ function stopBenchmark() {
   document.getElementById("score").innerText =
     "Score: " + Math.floor(score / 100000);
 }
-
-document.getElementById("start").onclick = startBenchmark;
-document.getElementById("stop").onclick = stopBenchmark;
