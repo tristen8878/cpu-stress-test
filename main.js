@@ -6,11 +6,14 @@ const DURATION = 20000;
 
 // show CPU threads
 const threads = navigator.hardwareConcurrency || 'Unknown';
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("threads").innerText = "Threads: " + threads;
 
   document.getElementById("start").onclick = startBenchmark;
   document.getElementById("stop").onclick = stopBenchmark;
+
+  renderLeaderboard();
 });
 
 function startBenchmark() {
@@ -54,8 +57,47 @@ function stopBenchmark() {
 
   workers = [];
 
+  const finalScore = Math.floor(score / 100000);
+
   document.getElementById("status").innerText = "Status: Finished";
 
-  document.getElementById("score").innerText =
-    "Score: " + Math.floor(score / 100000);
+  document.getElementById("score").innerText = "Score: " + finalScore;
+
+  saveToLeaderboard(finalScore);
+  renderLeaderboard();
+}
+
+function saveToLeaderboard(finalScore) {
+  const name =
+    document.getElementById("nameInput").value || "Unknown CPU";
+
+  const data = JSON.parse(localStorage.getItem("cpuLeaderboard") || "[]");
+
+  data.push({
+    name,
+    score: finalScore,
+    time: new Date().toLocaleString()
+  });
+
+  data.sort((a, b) => b.score - a.score);
+
+  localStorage.setItem(
+    "cpuLeaderboard",
+    JSON.stringify(data.slice(0, 10))
+  );
+}
+
+function renderLeaderboard() {
+  const data = JSON.parse(localStorage.getItem("cpuLeaderboard") || "[]");
+
+  const el = document.getElementById("boardList");
+
+  if (data.length === 0) {
+    el.innerHTML = "No runs yet";
+    return;
+  }
+
+  el.innerHTML = data
+    .map((d, i) => `#${i + 1} ${d.name} - ${d.score}`)
+    .join("<br>");
 }
