@@ -1,21 +1,20 @@
 let workers = [];
 let running = false;
 
-let singleScore = 0;
-let multiScore = 0;
-
-const SINGLE_DURATION = 5000;
-const MULTI_DURATION = 20000;
+let score = 0;
+const DURATION = 20000;
 
 const ring = document.getElementById("ring");
 const card = document.getElementById("card");
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("threads").innerText =
-    "Threads: " + (navigator.hardwareConcurrency || "Unknown");
+const threads = navigator.hardwareConcurrency || "Unknown";
 
-  document.getElementById("start").onclick = startBenchmark;
-  document.getElementById("stop").onclick = stopBenchmark;
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("threads").innerText = "Threads: " + threads;
+
+  document.getElementById("start").onclick = start;
+  document.getElementById("stop").onclick = stop;
+  document.getElementById("theme").onclick = toggleTheme;
 
   renderLeaderboard();
 });
@@ -30,94 +29,54 @@ function animateScore(target) {
       current = target;
       clearInterval(interval);
     }
-    document.getElementById("score").innerText =
-      `Single: ${current.single ?? current} | Multi: ${current.multi ?? ""}`;
+    document.getElementById("score").innerText = current;
   }, 16);
 }
 
-function animateRing(duration) {
-  const total = duration;
-  let elapsed = 0;
-
+function animateRing(ms) {
+  const total = DURATION;
   const interval = setInterval(() => {
-    elapsed += 100;
-
-    const progress = elapsed / total;
+    const progress = ms / total;
     const offset = 125 - (125 * progress);
+    ring.style.strokeDashoffset = offset;
 
-    if (ring) ring.style.strokeDashoffset = offset;
-
-    if (elapsed >= total) clearInterval(interval);
+    if (ms >= total) clearInterval(interval);
+    ms += 100;
   }, 100);
 }
 
-function startBenchmark() {
+function start() {
   if (running) return;
   running = true;
 
+  score = 0;
+
+  document.getElementById("status").innerText = "Running...";
   card.classList.add("running");
-
-  document.getElementById("status").innerText =
-    "Running single-thread test...";
-
-  runSingleThreadTest(() => {
-    startMultiThreadTest();
-  });
-}
-
-function runSingleThreadTest(callback) {
-  singleScore = 0;
-
-  const worker = new Worker("worker.js");
-
-  worker.onmessage = (e) => {
-    if (e.data.type === "result") {
-      singleScore += e.data.value;
-    }
-  };
-
-  worker.postMessage({ type: "start" });
-
-  animateRing(SINGLE_DURATION);
-
-  setTimeout(() => {
-    worker.postMessage({ type: "stop" });
-    worker.terminate();
-    callback();
-  }, SINGLE_DURATION);
-}
-
-function startMultiThreadTest() {
-  multiScore = 0;
-  workers = [];
-
-  document.getElementById("status").innerText =
-    "Running multi-thread test...";
 
   const cores = navigator.hardwareConcurrency || 4;
 
   for (let i = 0; i < cores; i++) {
-    const worker = new Worker("worker.js");
+    const w = new Worker("worker.js");
 
-    worker.onmessage = (e) => {
+    w.onmessage = e => {
       if (e.data.type === "result") {
-        multiScore += e.data.value;
+        score += e.data.value;
       }
     };
 
-    worker.postMessage({ type: "start" });
-    workers.push(worker);
+    w.postMessage({ type: "start" });
+    workers.push(w);
   }
 
-  animateRing(MULTI_DURATION);
+  animateRing(0);
 
-  setTimeout(stopBenchmark, MULTI_DURATION);
+  setTimeout(stop, DURATION);
 }
 
-function stopBenchmark() {
+function stop() {
+  if (!running) return;
   running = false;
-
-  card.classList.remove("running");
 
   workers.forEach(w => {
     w.postMessage({ type: "stop" });
@@ -126,35 +85,22 @@ function stopBenchmark() {
 
   workers = [];
 
-  const single = Math.floor(singleScore / 100000);
-  const multi = Math.floor(multiScore / 100000);
+  const final = Math.floor(score / 100000);
 
   document.getElementById("status").innerText = "Finished";
+  card.classList.remove("running");
 
-  animateFinalScore(single, multi);
+  animateScore(final);
 
-  saveToLeaderboard(multi);
+  save(final);
   renderLeaderboard();
 }
 
-function animateFinalScore(single, multi) {
-  let i = 0;
-
-  const interval = setInterval(() => {
-    i += 1;
-
-    document.getElementById("score").innerText =
-      `Single: ${Math.floor(single * i / 20)} | Multi: ${Math.floor(multi * i / 20)}`;
-
-    if (i >= 20) {
-      clearInterval(interval);
-      document.getElementById("score").innerText =
-        `Single: ${single} | Multi: ${multi}`;
-    }
-  }, 30);
+function toggleTheme() {
+  document.body.classList.toggle("light");
 }
 
-function saveToLeaderboard(finalScore) {
+function save(finalScore) {
   const name =
     document.getElementById("nameInput").value || "Unknown CPU";
 
